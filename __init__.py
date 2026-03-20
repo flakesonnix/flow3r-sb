@@ -49,10 +49,14 @@ CRAFTY_HEATER_OFF = bluetooth.UUID("00000091-4c45-4b43-4942-265a524f5453")
 SB_PREFIXES = (b"STORZ&BICKEL", b"S&B VY", b"S&B VZ", b"S&B VOLCANO", b"S&B CRAFTY")
 
 # Device type constants
-DEV_NONE = 0
-DEV_VOLCANO = 1
-DEV_VENTY = 2
-DEV_CRAFTY = 3
+DEV_NONE: int = const(0)
+DEV_VOLCANO: int = const(1)
+DEV_VENTY: int = const(2)
+DEV_CRAFTY: int = const(3)
+
+# Temperature range
+TEMP_MIN: float = const(40.0)
+TEMP_MAX: float = const(230.0)
 
 
 class SBControl(Application):
@@ -70,39 +74,38 @@ class SBControl(Application):
         self._connected = False
 
         # Characteristic handles (Volcano)
-        self._h_volcano_target = None
-        self._h_volcano_heater_on = None
-        self._h_volcano_heater_off = None
-        self._h_volcano_current = None
-        self._h_volcano_activity = None
+        self._h_volcano_target: int | None = None
+        self._h_volcano_heater_on: int | None = None
+        self._h_volcano_heater_off: int | None = None
+        self._h_volcano_current: int | None = None
+        self._h_volcano_activity: int | None = None
 
         # Characteristic handles (Venty)
-        self._h_venty_control = None
+        self._h_venty_control: int | None = None
 
         # Characteristic handles (Crafty)
-        self._h_crafty_target = None
-        self._h_crafty_heater_on = None
-        self._h_crafty_heater_off = None
+        self._h_crafty_target: int | None = None
+        self._h_crafty_heater_on: int | None = None
+        self._h_crafty_heater_off: int | None = None
 
         # Device state
-        self.current_temp = None
-        self.target_temp = 180.0
-        self.heater_on = False
-        self.pump_on = False
-        self.battery = None
+        self.current_temp: float | None = None
+        self.target_temp: float = 180.0
+        self.heater_on: bool = False
+        self.pump_on: bool = False
+        self.battery: int | None = None
 
         # UI state
-        self.status_msg = "Press App btn to scan"
-        self.status_color = (0.5, 0.5, 0.5)
-        self._last_think = 0
-        self._led_timer = 0
-        self._status_clear_at = 0
+        self.status_msg: str = "Press App btn to scan"
+        self.status_color: tuple = (0.5, 0.5, 0.5)
+        self._last_think: int = 0
+        self._led_timer: int = 0
+        self._status_clear_at: int = 0
 
-        # Scan results
-        self._scan_results = []
-        self._scan_start = 0
+        # Scan results: list of (addr_type, addr_bytes, name, rssi)
+        self._scan_results: list = []
 
-    def get_help(self):
+    def get_help(self) -> str:
         return (
             "Control Storz & Bickel vaporizers via BLE.\n"
             "\n"
@@ -128,7 +131,7 @@ class SBControl(Application):
         leds.set_all_rgb(0, 0, 0)
         leds.update()
 
-    def _init_ble(self):
+    def _init_ble(self) -> None:
         """Initialize BLE radio."""
         try:
             self._ble = bluetooth.BLE()
@@ -197,7 +200,7 @@ class SBControl(Application):
             conn_handle, value_handle, char_data = data
             self._handle_read(value_handle, char_data)
 
-    def _parse_name(self, adv_data):
+    def _parse_name(self, adv_data: bytes) -> bytes:
         """Extract local name from advertisement data."""
         i = 0
         while i < len(adv_data):
@@ -210,7 +213,7 @@ class SBControl(Application):
             i += 1 + length
         return b""
 
-    def _is_sb_device(self, name):
+    def _is_sb_device(self, name: bytes) -> bool:
         """Check if name matches S&B device prefixes."""
         if not name:
             return False
@@ -219,7 +222,7 @@ class SBControl(Application):
                 return True
         return False
 
-    def _start_scan(self):
+    def _start_scan(self) -> None:
         """Start BLE scanning for S&B devices."""
         if self._scanning:
             return
@@ -233,7 +236,7 @@ class SBControl(Application):
             self._scanning = False
             self._set_status(f"Scan err: {e}", (1, 0, 0))
 
-    def _connect_best(self):
+    def _connect_best(self) -> None:
         """Connect to the best (strongest RSSI) found device."""
         if not self._scan_results:
             return
@@ -250,7 +253,7 @@ class SBControl(Application):
         except Exception as e:
             self._set_status(f"Connect err: {e}", (1, 0, 0))
 
-    def _disconnect(self):
+    def _disconnect(self) -> None:
         """Disconnect from current device."""
         if self._conn_handle is not None:
             try:
@@ -260,7 +263,7 @@ class SBControl(Application):
             self._conn_handle = None
             self._connected = False
 
-    def _discover_chars(self, conn_handle, start_handle, end_handle):
+    def _discover_chars(self, conn_handle: int, start_handle: int, end_handle: int) -> None:
         """Discover characteristics for a service."""
         try:
             self._ble.gattc_discover_characteristics(
@@ -269,7 +272,7 @@ class SBControl(Application):
         except Exception:
             pass
 
-    def _register_char(self, uuid, value_handle):
+    def _register_char(self, uuid: bluetooth.UUID, value_handle: int) -> None:
         """Register a discovered characteristic handle."""
         if uuid == VOLCANO_CURRENT_TEMP:
             self._h_volcano_current = value_handle
@@ -299,7 +302,7 @@ class SBControl(Application):
         elif uuid == CRAFTY_HEATER_OFF:
             self._h_crafty_heater_off = value_handle
 
-    def _subscribe_notify(self, value_handle):
+    def _subscribe_notify(self, value_handle: int) -> None:
         """Subscribe to notifications on a characteristic."""
         if self._conn_handle is None:
             return
@@ -312,14 +315,14 @@ class SBControl(Application):
         except Exception:
             pass
 
-    def _venty_init(self):
+    def _venty_init(self) -> None:
         """Send Venty/Veazy init sequence."""
         for cmd in (0x02, 0x1D, 0x01, 0x04):
             buf = bytearray(20)
             buf[0] = cmd
             self._write_venty(buf)
 
-    def _handle_notify(self, value_handle, data):
+    def _handle_notify(self, value_handle: int, data: bytes) -> None:
         """Handle BLE notification."""
         if value_handle == self._h_volcano_activity and len(data) >= 2:
             flags = struct.unpack_from("<H", data, 0)[0]
@@ -343,7 +346,7 @@ class SBControl(Application):
                 if len(data) >= 12:
                     self.heater_on = data[11] > 0
 
-    def _handle_read(self, value_handle, data):
+    def _handle_read(self, value_handle: int, data: bytes) -> None:
         """Handle BLE read result."""
         if value_handle == self._h_volcano_current and len(data) >= 2:
             raw = struct.unpack_from("<H", data, 0)[0]
@@ -351,7 +354,7 @@ class SBControl(Application):
 
     # ── Device Control ──────────────────────────────────────────────────────
 
-    def _set_target_temp(self, temp):
+    def _set_target_temp(self, temp: float) -> None:
         """Set target temperature on device."""
         temp = max(40.0, min(230.0, temp))
         raw = int(temp * 10)
@@ -374,7 +377,7 @@ class SBControl(Application):
 
         self.target_temp = temp
 
-    def _heater_on(self):
+    def _heater_on(self) -> None:
         """Turn heater on."""
         if self._device_type == DEV_VOLCANO and self._h_volcano_heater_on:
             self._write_char(self._h_volcano_heater_on, b"\x00")
@@ -388,7 +391,7 @@ class SBControl(Application):
             self._write_char(self._h_crafty_heater_on, b"\x00")
         self.heater_on = True
 
-    def _heater_off(self):
+    def _heater_off(self) -> None:
         """Turn heater off."""
         if self._device_type == DEV_VOLCANO and self._h_volcano_heater_off:
             self._write_char(self._h_volcano_heater_off, b"\x00")
@@ -402,7 +405,7 @@ class SBControl(Application):
             self._write_char(self._h_crafty_heater_off, b"\x00")
         self.heater_on = False
 
-    def _write_char(self, handle, data):
+    def _write_char(self, handle: int, data: bytes) -> None:
         """Write to a characteristic."""
         if self._conn_handle is None:
             return
@@ -411,19 +414,19 @@ class SBControl(Application):
         except Exception:
             pass
 
-    def _write_venty(self, data):
+    def _write_venty(self, data: bytearray) -> None:
         """Write to Venty control characteristic."""
         self._write_char(self._h_venty_control, data)
 
     # ── UI ──────────────────────────────────────────────────────────────────
 
-    def _set_status(self, msg, color=(0.5, 0.5, 0.5)):
+    def _set_status(self, msg: str, color: tuple = (0.5, 0.5, 0.5)) -> None:
         """Set status message with color."""
         self.status_msg = msg
         self.status_color = color
         self._status_clear_at = time.ticks_add(time.ticks_ms(), 5000)
 
-    def think(self, ins, delta_ms):
+    def think(self, ins, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
         # App button: scan/connect
@@ -468,7 +471,7 @@ class SBControl(Application):
                 self.status_msg = ""
             self._status_clear_at = 0
 
-    def _update_leds(self):
+    def _update_leds(self) -> None:
         """Update LED ring based on state."""
         if not self._connected:
             # Breathing blue while scanning
@@ -510,7 +513,7 @@ class SBControl(Application):
         else:
             self._draw_connected(ctx)
 
-    def _draw_disconnected(self, ctx):
+    def _draw_disconnected(self, ctx: Context) -> None:
         """Draw disconnected state."""
         # Title
         ctx.rgb(1, 1, 1)
@@ -539,7 +542,7 @@ class SBControl(Application):
         ctx.move_to(0, 90)
         ctx.text("App btn = scan/connect")
 
-    def _draw_connected(self, ctx):
+    def _draw_connected(self, ctx: Context) -> None:
         """Draw connected state with temperature display."""
         device_names = {
             DEV_VOLCANO: "Volcano",

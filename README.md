@@ -13,12 +13,51 @@ for temperature control.
 - Volcano Hybrid
 - Crafty+
 
-## Installation
+## Installation (Real Badge)
 
 1. Connect your flow3r badge via USB (Disk Mode)
 2. Copy this folder to `apps/sb_control` on the badge
 3. Restart the badge
 4. Find "S&B Control" in the Apps menu
+
+## Quick Development (mpremote)
+
+```bash
+# Install mpremote
+pip install mpremote
+
+# Connect badge via USB, then:
+mpremote run __init__.py
+```
+
+## Simulator Setup
+
+The flow3r firmware includes a Python/Pygame simulator. BLE won't work in the
+simulator, but you can test the UI and touch input.
+
+```bash
+# Clone firmware (includes simulator)
+git clone --depth 1 https://git.flow3r.garden/flow3r/flow3r-firmware
+cd flow3r-firmware
+
+# Install dependencies
+python3 -m venv venv
+venv/bin/pip install pygame requests pymad
+venv/bin/pip install wasmer wasmer-compiler-cranelift
+
+# Copy our app into the simulator
+cp -r /path/to/flow3r-sb python_payload/apps/sb_control
+
+# Run simulator
+venv/bin/python sim/run.py
+
+# Or launch app directly:
+venv/bin/python sim/run.py "S&B Control"
+```
+
+**Note:** The simulator does not support BLE. The app will show
+"Press App btn to scan" but cannot actually connect to devices.
+Use it to test the UI layout and petal touch input.
 
 ## Controls
 
@@ -26,13 +65,14 @@ for temperature control.
 
 | Control | Action |
 |---------|--------|
-| Petal 0 | Target temp -10°C |
-| Petal 1 | Target temp -5°C |
-| Petal 2 | Toggle heater on/off |
-| Petal 3 | Target temp +5°C |
-| Petal 4 | Target temp +10°C |
-| App button | Scan / connect / disconnect |
-| OS button | Exit |
+| Petal 0 (top left) | Target temp -10°C |
+| Petal 2 (top left-center) | Target temp -5°C |
+| Petal 4 (top center) | Toggle heater on/off |
+| Petal 6 (top right-center) | Target temp +5°C |
+| Petal 8 (top right) | Target temp +10°C |
+| App button (left shoulder) | Scan / connect / disconnect |
+| OS button (right shoulder) | Back / exit |
+| Hold OS 1s | Context menu (help, exit) |
 
 ## Connection
 
@@ -44,11 +84,9 @@ for temperature control.
 4. App auto-connects to strongest S&B device found
 5. Use petals to control temperature
 
-## Display
+## Display States
 
 ![Screen States](assets/screens.svg)
-
-## Display
 
 - **Current temperature** — large number in center
 - **Target temperature** — below current
