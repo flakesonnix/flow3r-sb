@@ -1,0 +1,11 @@
+[app]
+name = "S&B Control"
+category = "Apps"
+
+[entry]
+class = "Tools"
+
+[metadata]
+author = "flakesonnix"
+license = "MIT"
+url = "https://github.com/flakesonnix/storz-rs"
