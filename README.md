@@ -22,6 +22,8 @@ for temperature control.
 
 ## Controls
 
+![Controls Diagram](assets/controls.svg)
+
 | Control | Action |
 |---------|--------|
 | Petal 0 | Target temp -10°C |
@@ -31,6 +33,20 @@ for temperature control.
 | Petal 4 | Target temp +10°C |
 | App button | Scan / connect / disconnect |
 | OS button | Exit |
+
+## Connection
+
+![Connection Flow](assets/flow.svg)
+
+1. Open "S&B Control" from Apps menu
+2. Press APP button to start BLE scan
+3. LED ring breathes blue while scanning
+4. App auto-connects to strongest S&B device found
+5. Use petals to control temperature
+
+## Display
+
+![Screen States](assets/screens.svg)
 
 ## Display
 
