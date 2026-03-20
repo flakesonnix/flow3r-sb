@@ -102,6 +102,19 @@ class SBControl(Application):
         self._scan_results = []
         self._scan_start = 0
 
+    def get_help(self):
+        return (
+            "Control Storz & Bickel vaporizers via BLE.\n"
+            "\n"
+            "APP button: scan/connect/disconnect\n"
+            "Top petals 0,2,4,6,8: temp -10, -5, on/off, +5, +10\n"
+            "\n"
+            "LED ring shows temp progress:\n"
+            "  green = at target, orange = heating, blue = cooling\n"
+            "\n"
+            "Supports: Venty, Veazy, Volcano Hybrid, Crafty+"
+        )
+
     def on_enter(self, vm):
         super().on_enter(vm)
         self._init_ble()
@@ -421,10 +434,11 @@ class SBControl(Application):
                 self._disconnect()
                 self._set_status("Disconnected", (1, 0.5, 0))
 
-        # Petal controls
+        # Petal controls (top row: petals 0, 2, 4, 6, 8)
         if self._connected:
-            for i in range(5):
-                if self.input.captouch.petals[i].whole.pressed:
+            petals = (0, 2, 4, 6, 8)
+            for i, p in enumerate(petals):
+                if self.input.captouch.petals[p].whole.pressed:
                     if i == 0:
                         self._set_target_temp(self.target_temp - 10)
                     elif i == 1:
