@@ -155,7 +155,7 @@ class SBControl(Application):
             conn_handle, addr_type, addr = data
             self._conn_handle = conn_handle
             self._connected = True
-            self._set_status(f"Connected!", (0, 1, 0))
+            self._set_status("Connected", (0, 1, 0))
             # Discover services
             self._ble.gattc_discover_services(conn_handle)
 
@@ -261,7 +261,7 @@ class SBControl(Application):
         if uuid == VOLCANO_CURRENT_TEMP:
             self._h_volcano_current = value_handle
             self._device_type = DEV_VOLCANO
-            self._set_status(f"Volcano detected!", (0, 1, 0))
+            self._set_status("Volcano detected!", (0, 1, 0))
         elif uuid == VOLCANO_TARGET_TEMP:
             self._h_volcano_target = value_handle
         elif uuid == VOLCANO_HEATER_ON:
@@ -274,13 +274,13 @@ class SBControl(Application):
         elif uuid == VENTY_CONTROL:
             self._h_venty_control = value_handle
             self._device_type = DEV_VENTY
-            self._set_status(f"Venty/Veazy detected!", (0, 1, 0))
+            self._set_status("Venty/Veazy detected!", (0, 1, 0))
             self._subscribe_notify(value_handle)
             self._venty_init()
         elif uuid == CRAFTY_WRITE_TEMP:
             self._h_crafty_target = value_handle
             self._device_type = DEV_CRAFTY
-            self._set_status(f"Crafty detected!", (0, 1, 0))
+            self._set_status("Crafty detected!", (0, 1, 0))
         elif uuid == CRAFTY_HEATER_ON:
             self._h_crafty_heater_on = value_handle
         elif uuid == CRAFTY_HEATER_OFF:
